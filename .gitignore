@@ -1,0 +1,7 @@
+.idea
+venv
+.env
+ignore
+information.txt
+downloaded_podcasts.yaml
+podcasts.yaml
