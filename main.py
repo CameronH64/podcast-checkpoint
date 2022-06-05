@@ -45,11 +45,20 @@ def get_complete_podcast_information(api_key, podcast_channels):
         )
 
         # Execute API call for each channel.
-        response = request.execute()
+        response = request.execute()        # Response is a dictionary.
         total_responses.append(response)
 
     # Note: total_responses is a list.
-    return total_responses
+    return total_responses      # total_responses is a list.
+
+
+def extract_podcast_urls(total_responses):
+
+    podcast_urls = []
+
+
+
+    return podcast_urls
 
 
 def main():
@@ -64,6 +73,7 @@ def main():
 
     # Find the urls to download, latest 10 videos from each channel.
     total_responses = get_complete_podcast_information(api_key, podcast_channels)
+    podcast_urls = extract_podcast_urls(total_responses)
 
 
 if __name__ == "__main__":
