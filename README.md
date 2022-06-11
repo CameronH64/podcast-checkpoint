@@ -15,7 +15,17 @@ A YouTube channel's upload ID can be derived from its channel ID.
 - Change those two characters to "UU", keeping the rest the same.
 - This string of characters is the channel's upload ID!
 
-While I plan on coding a native or external way of doing this, this will work for most channels.
+## Alternative method
+For the more tech savvy, this method may be more reliable.
+
+- Go to a YouTube channel's homepage.
+- Inspect element.
+- In the source code, search for "channelid".
+- It may not come up; if so, refresh the page, and try again.
+- It should show up in the search.
+- Replace the second character, the "C" to a "U". You now have that channel's upload playlist ID!
+
+While I plan on coding a native or external way of doing this, this will work for most, if not all channels.
 
 # Need Help?
 Contact me at cholbrook582@gmail.com.

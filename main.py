@@ -40,7 +40,7 @@ def get_complete_podcast_information(api_key, podcast_channels):
         # Return results from upload playlist (it's its own playlist)
         request = youtube_service.playlistItems().list(
             part="contentDetails, snippet",     # contentDetails has videoId and videoPublishedAt. Snippet has some video information.
-            maxResults=5,
+            maxResults=2,
             playlistId=upload_id
         )
 
@@ -56,7 +56,7 @@ def extract_podcast_urls(total_responses):
 
     podcast_urls = []
 
-
+    print(total_responses)
 
     return podcast_urls
 
@@ -74,6 +74,8 @@ def main():
     # Find the urls to download, latest 10 videos from each channel.
     total_responses = get_complete_podcast_information(api_key, podcast_channels)
     podcast_urls = extract_podcast_urls(total_responses)
+
+    print(podcast_urls)
 
 
 if __name__ == "__main__":
