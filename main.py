@@ -5,6 +5,9 @@ import yaml
 from yaml.loader import SafeLoader
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 def download_m4a(URLS):
@@ -24,23 +27,25 @@ def download_m4a(URLS):
 
 def get_complete_podcast_information(api_key, podcast_channels):
 
-    download_urls = []
     total_responses = []
     needed_information = []
+
     # Build YouTube service object.
     youtube_service = build('youtube', 'v3', developerKey=api_key)
 
     # Use yaml file as a list of channels; use for loops.
     # Using YouTube service object, create a request.
 
-    for upload_id in podcast_channels:   # I want this to repeat for each YouTube channel.
 
-        # 'videoPublishedAt': '2022-06-04T00:30:11Z'
+    # Get all information
+    for upload_id in podcast_channels:   # For each listed ID in the .yaml file.
+
+        # 'videoPublishedAt': '2022-06-10T17:04:35Z'        # T and Z can be ignored?
 
         # Return results from upload playlist (it's its own playlist)
         request = youtube_service.playlistItems().list(
             part="contentDetails, snippet",     # contentDetails has videoId and videoPublishedAt. Snippet has some video information.
-            maxResults=2,
+            maxResults=1,
             playlistId=upload_id
         )
 
@@ -48,15 +53,16 @@ def get_complete_podcast_information(api_key, podcast_channels):
         response = request.execute()        # Response is a dictionary.
         total_responses.append(response)
 
-    # Note: total_responses is a list.
     return total_responses      # total_responses is a list.
 
 
-def extract_podcast_urls(total_responses):
+def derive_podcast_urls(total_responses):
 
     podcast_urls = []
 
-    print(total_responses)
+    # Also for debugging
+    pprint.pprint(total_responses)
+    logging.info("Extra video information.")
 
     return podcast_urls
 
@@ -73,8 +79,11 @@ def main():
 
     # Find the urls to download, latest 10 videos from each channel.
     total_responses = get_complete_podcast_information(api_key, podcast_channels)
-    podcast_urls = extract_podcast_urls(total_responses)
+    podcast_urls = derive_podcast_urls(total_responses)
 
+    # Debugging
+    print()
+    print("Podcast urls")
     print(podcast_urls)
 
 
