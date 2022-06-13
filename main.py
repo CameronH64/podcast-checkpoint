@@ -7,8 +7,6 @@ from dotenv import load_dotenv
 from googleapiclient.discovery import build
 import logging
 
-logging.basicConfig(level=logging.DEBUG)
-
 
 def download_m4a(URLS):
 
