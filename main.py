@@ -5,7 +5,6 @@ import yaml
 from yaml.loader import SafeLoader
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
-import logging
 
 
 def download_m4a(URLS):
@@ -26,7 +25,6 @@ def download_m4a(URLS):
 def get_complete_podcast_information(api_key, podcast_channels):
 
     total_responses = []
-    needed_information = []
 
     # Build YouTube service object.
     youtube_service = build('youtube', 'v3', developerKey=api_key)
@@ -59,8 +57,14 @@ def derive_podcast_urls(total_responses):
     podcast_urls = []
 
     # Also for debugging
+    print("Total responses: ")
     pprint.pprint(total_responses)
-    logging.info("Extra video information.")
+
+    print()
+    print("Single response: ")
+    pprint.pprint(total_responses[0]['items'][0]['contentDetails'])
+    pprint.pprint(total_responses[0]['items'][0]['contentDetails']['videoId'])
+    pprint.pprint(total_responses[0]['items'][0]['contentDetails']['videoPublishedAt'])
 
     return podcast_urls
 
@@ -78,11 +82,6 @@ def main():
     # Find the urls to download, latest 10 videos from each channel.
     total_responses = get_complete_podcast_information(api_key, podcast_channels)
     podcast_urls = derive_podcast_urls(total_responses)
-
-    # Debugging
-    print()
-    print("Podcast urls")
-    print(podcast_urls)
 
 
 if __name__ == "__main__":
