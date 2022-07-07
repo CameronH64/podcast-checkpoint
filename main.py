@@ -5,6 +5,7 @@ import yaml
 from yaml.loader import SafeLoader
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
+import time
 
 
 def download_m4a(URLS):
@@ -32,7 +33,6 @@ def get_complete_podcast_information(api_key, podcast_channels):
     # Use yaml file as a list of channels; use for loops.
     # Using YouTube service object, create a request.
 
-
     # Get all information
     for upload_id in podcast_channels:   # For each listed ID in the .yaml file.
 
@@ -41,13 +41,19 @@ def get_complete_podcast_information(api_key, podcast_channels):
         # Return results from upload playlist (it's its own playlist)
         request = youtube_service.playlistItems().list(
             part="contentDetails, snippet",     # contentDetails has videoId and videoPublishedAt. Snippet has some video information.
-            maxResults=1,
+            maxResults=20,
             playlistId=upload_id
         )
 
         # Execute API call for each channel.
-        response = request.execute()        # Response is a dictionary.
-        total_responses.append(response)
+        response = request.execute()        # response is a dictionary
+
+        # Extract videoId and videoPublishedAt
+        total_responses.append(response['items'][0]['contentDetails']['videoId'])
+        total_responses.append(response['items'][0]['contentDetails']['videoPublishedAt'])
+
+        # pprint.pprint(type(total_responses))
+        pprint.pprint(total_responses)
 
     return total_responses      # total_responses is a list.
 
@@ -56,15 +62,18 @@ def derive_podcast_urls(total_responses):
 
     podcast_urls = []
 
-    # Also for debugging
-    print("Total responses: ")
-    pprint.pprint(total_responses)
 
     print()
-    print("Single response: ")
-    pprint.pprint(total_responses[0]['items'][0]['contentDetails'])
-    pprint.pprint(total_responses[0]['items'][0]['contentDetails']['videoId'])
-    pprint.pprint(total_responses[0]['items'][0]['contentDetails']['videoPublishedAt'])
+
+    # print("Single responses: ")
+    # pprint.pprint(total_responses[0]['items'][0]['contentDetails'])
+    # pprint.pprint(total_responses[0]['items'][0]['contentDetails']['videoId'])
+    # pprint.pprint(total_responses[0]['items'][0]['contentDetails']['videoPublishedAt'])
+
+    # print()
+
+    # Needed to create downloadable video links.
+    # www.youtube.com/watch?v=
 
     return podcast_urls
 
