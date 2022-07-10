@@ -22,40 +22,68 @@ def download_m4a(URLS):
     with yt_dlp.YoutubeDL(options) as ydl:
         error_code = ydl.download(URLS)
 
+# The reason we have to gather all the video_ids first instead of doing this all in one fell swoop is
+# because the playlistItems() function can't return all the pertinent details needed to specify which podcasts
+# to download. BUT, it CAN return results for each YouTube channel's upload playlist.
+# Then, the youtube.videos() function can take the video ids returned by playlistItems() and derive the
+# important details from that. Convoluted? Yes. Works? Also yes. I will look into simplifying this in the future,
+# but as of now, this will do.
 
-def get_complete_podcast_information(api_key, podcast_channels):
+def get_podcast_ids(api_key, podcast_channels):
 
-    total_responses = []
+    cumulative = []
+    video_ids = []
 
     # Build YouTube service object.
     youtube_service = build('youtube', 'v3', developerKey=api_key)
 
-    # Use yaml file as a list of channels; use for loops.
-    # Using YouTube service object, create a request.
+    # The following code has two for loops:
+    # 1. Get ALL of the information
+    # 2. Extract the video_ids.
 
-    # Get all information
-    for upload_id in podcast_channels:   # For each listed ID in the .yaml file.
-
-        # 'videoPublishedAt': '2022-06-10T17:04:35Z'        # T and Z can be ignored?
+    # For each listed upload playlist (per channel) in the .yaml file.
+    # 1. Get ALL of the information
+    for upload_playlist_id in podcast_channels:
 
         # Return results from upload playlist (it's its own playlist)
         request = youtube_service.playlistItems().list(
-            part="contentDetails, snippet",     # contentDetails has videoId and videoPublishedAt. Snippet has some video information.
-            maxResults=20,
-            playlistId=upload_id
+            part="contentDetails",              # contentDetails has video id, which is what we're interested in.
+            maxResults=2,                       # The max value allowed is 50.
+            playlistId=upload_playlist_id       # For each channel's upload playlist.
         )
 
         # Execute API call for each channel.
         response = request.execute()        # response is a dictionary
+        cumulative.append(response)
 
-        # Extract videoId and videoPublishedAt
-        total_responses.append(response['items'][0]['contentDetails']['videoId'])
-        total_responses.append(response['items'][0]['contentDetails']['videoPublishedAt'])
 
-        # pprint.pprint(type(total_responses))
-        pprint.pprint(total_responses)
+    # 2. Extract the video_ids.
 
-    return total_responses      # total_responses is a list.
+    for x in range(0, len(cumulative)):
+        video_ids.append(cumulative[x]['items'][x]['contentDetails']['videoId'])
+
+
+    # print("Working: ")
+    # print()
+    #
+    # # KEY CODE
+    # pprint.pprint(cumulative[0]['items'][0]['contentDetails']['videoId'])
+    #
+    # print()
+
+
+    # DEBUGGING
+    print("Cumulative: ")
+    print()
+    pprint.pprint(cumulative)
+    print()
+
+    print()
+    print("video_ids: ")
+    print()
+    pprint.pprint(video_ids)
+
+    return video_ids
 
 
 def derive_podcast_urls(total_responses):
@@ -89,9 +117,41 @@ def main():
         podcast_channels = yaml.load(f, Loader=SafeLoader)
 
     # Find the urls to download, latest 10 videos from each channel.
-    total_responses = get_complete_podcast_information(api_key, podcast_channels)
+    total_responses = get_podcast_ids(api_key, podcast_channels)
     podcast_urls = derive_podcast_urls(total_responses)
 
 
 if __name__ == "__main__":
     main()
+
+
+
+
+
+
+################ LATER
+# request = youtube.videos().list(
+#     part="snippet,contentDetails,statistics",
+#     id="3E6V9TrVkLY"
+# )
+# response = request.execute()
+#
+# print(response)
+
+################ LATER
+
+
+
+################ TESTING
+
+# # Extract videoId and videoPublishedAt
+# video_urls.append(response['items'][0]['contentDetails']['videoId'])
+# video_published_ats.append(response['items'][0]['contentDetails']['videoPublishedAt'])
+#
+# print("Video ids: \t\t\t\t", video_urls)
+# print("Video publish dates: \t", video_published_ats)
+#
+# test_list = [video_urls, video_published_ats]
+# print(test_list[0])
+
+################ TESTING
