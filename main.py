@@ -24,15 +24,22 @@ def download_m4a(URLS):
 
 # The reason we have to gather all the video_ids first instead of doing this all in one fell swoop is
 # because the playlistItems() function can't return all the pertinent details needed to specify which podcasts
-# to download. BUT, it CAN return results for each YouTube channel's upload playlist.
-# Then, the youtube.videos() function can take the video ids returned by playlistItems() and derive the
+# to download. BUT, it CAN and MUST return results for each YouTube channel's upload playlist. Because of the
+# limitations of the youtube.videos() functions. It can only deal with videos, not playlists.
+# The youtube.videos() function can then take the video ids returned by playlistItems() and derive the
 # important details from that. Convoluted? Yes. Works? Also yes. I will look into simplifying this in the future,
-# but as of now, this will do.
+# but as of now, this will have to do.
 
 def get_podcast_ids(api_key, podcast_channels):
 
+    # In case podcast_channels has no upload playlist to download from.
+    if not podcast_channels:
+        print("podcast_channels file is empty. Returning... ")
+        return
+
     cumulative = []
     video_ids = []
+    max_returns = 20            # Using a separate variable for video id extraction below.
 
     # Build YouTube service object.
     youtube_service = build('youtube', 'v3', developerKey=api_key)
@@ -48,7 +55,7 @@ def get_podcast_ids(api_key, podcast_channels):
         # Return results from upload playlist (it's its own playlist)
         request = youtube_service.playlistItems().list(
             part="contentDetails",              # contentDetails has video id, which is what we're interested in.
-            maxResults=2,                       # The max value allowed is 50.
+            maxResults=max_returns,             # The max value allowed is 50.
             playlistId=upload_playlist_id       # For each channel's upload playlist.
         )
 
@@ -59,49 +66,59 @@ def get_podcast_ids(api_key, podcast_channels):
 
     # 2. Extract the video_ids.
 
+    # This code is strange, and I'm not completely settled on it.
+    # Basically, it's a nested for loop to iterate through a YouTube channel's videos for EACH channel.
+    # Outer is for each channel, inner is for each video in that one channel.
     for x in range(0, len(cumulative)):
-        video_ids.append(cumulative[x]['items'][x]['contentDetails']['videoId'])
-
-
-    # print("Working: ")
-    # print()
-    #
-    # # KEY CODE
-    # pprint.pprint(cumulative[0]['items'][0]['contentDetails']['videoId'])
-    #
-    # print()
+        for y in range(0, max_returns):
+            video_ids.append(cumulative[x]['items'][y]['contentDetails']['videoId'])
 
 
     # DEBUGGING
-    print("Cumulative: ")
-    print()
-    pprint.pprint(cumulative)
-    print()
-
-    print()
-    print("video_ids: ")
-    print()
-    pprint.pprint(video_ids)
+    # print("Cumulative: ")
+    # print()
+    # pprint.pprint(cumulative)
+    # print()
+    #
+    # print()
+    # print("video_ids: ")
+    # print()
+    # pprint.pprint(video_ids)
+    # END DEBUGGING
 
     return video_ids
 
 
-def derive_podcast_urls(total_responses):
+def determine_valid_podcasts(api_key, podcast_urls):
+
+    valid_podcasts = []
+
+    youtube_service = build('youtube', 'v3', developerKey=api_key)
+
+    for podcast_id in podcast_urls:
+
+        request = youtube_service.videos().list(
+            part="snippet, contentDetails, statistics",
+            id=podcast_id
+        )
+
+        response = request.execute()
+
+        print(response)         # ONLY THIS PRINTS
+
+
+    return valid_podcasts
+
+
+def derive_podcast_urls(podcast_ids):
 
     podcast_urls = []
 
+    for video in podcast_ids:
+        podcast_urls.append(video)
 
-    print()
-
-    # print("Single responses: ")
-    # pprint.pprint(total_responses[0]['items'][0]['contentDetails'])
-    # pprint.pprint(total_responses[0]['items'][0]['contentDetails']['videoId'])
-    # pprint.pprint(total_responses[0]['items'][0]['contentDetails']['videoPublishedAt'])
-
-    # print()
-
-    # Needed to create downloadable video links.
-    # www.youtube.com/watch?v=
+    # DEBUGGING
+    # pprint.pprint(podcast_urls)
 
     return podcast_urls
 
@@ -116,29 +133,16 @@ def main():
     with open("podcasts.yaml") as f:
         podcast_channels = yaml.load(f, Loader=SafeLoader)
 
-    # Find the urls to download, latest 10 videos from each channel.
-    total_responses = get_podcast_ids(api_key, podcast_channels)
-    podcast_urls = derive_podcast_urls(total_responses)
+    podcast_ids = get_podcast_ids(api_key, podcast_channels)                    # Get all the podcast ids of recent videos.
+    valid_podcast_ids = determine_valid_podcasts(api_key, podcast_ids)          # Determine from ids which podcasts are valid. RETURN ONLY VALID IDS.
+    # podcast_urls = derive_podcast_urls(valid_podcast_ids)                     # Append YouTube ids to valid podcast ids.
+
+    # These YouTube urls can now be downloaded!
+    # download_m4a(podcast_urls)
 
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-################ LATER
-# request = youtube.videos().list(
-#     part="snippet,contentDetails,statistics",
-#     id="3E6V9TrVkLY"
-# )
-# response = request.execute()
-#
-# print(response)
-
-################ LATER
 
 
 
