@@ -39,7 +39,7 @@ def get_podcast_ids(api_key, podcast_channels):
 
     cumulative = []
     video_ids = []
-    max_returns = 20            # Using a separate variable for video id extraction below.
+    max_returns = 1            # Using a separate variable for video id extraction below.
 
     # Build YouTube service object.
     youtube_service = build('youtube', 'v3', developerKey=api_key)
@@ -92,7 +92,13 @@ def get_podcast_ids(api_key, podcast_channels):
 def determine_valid_podcasts(api_key, podcast_urls):
 
     valid_podcasts = []
+    test_kickstart_date = datetime(2022-07-08T19:19:35Z)
 
+    # Here, I have just a list of id's; that's it. I've no way to differentiate it.
+    # To distinguish podcasts:
+    # Greater than 45 minutes long.             # items, contentDetails, duration
+    # Published AFTER kickstart datetime.       # items, snippet, publishedAt
+    # Other: items, id
     youtube_service = build('youtube', 'v3', developerKey=api_key)
 
     for podcast_id in podcast_urls:
@@ -104,7 +110,9 @@ def determine_valid_podcasts(api_key, podcast_urls):
 
         response = request.execute()
 
-        print(response)         # ONLY THIS PRINTS
+        pprint.pprint(response)
+
+
 
 
     return valid_podcasts
@@ -115,7 +123,7 @@ def derive_podcast_urls(podcast_ids):
     podcast_urls = []
 
     for video in podcast_ids:
-        podcast_urls.append(video)
+        podcast_urls.append("www.youtube.com/watch?v=" + video)
 
     # DEBUGGING
     # pprint.pprint(podcast_urls)
