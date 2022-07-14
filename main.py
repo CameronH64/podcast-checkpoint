@@ -5,7 +5,7 @@ import yaml
 from yaml.loader import SafeLoader
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
-import time
+import datetime
 
 
 def download_m4a(URLS):
@@ -92,26 +92,42 @@ def get_podcast_ids(api_key, podcast_channels):
 def determine_valid_podcasts(api_key, podcast_urls):
 
     valid_podcasts = []
-    test_kickstart_date = datetime(2022-07-08T19:19:35Z)
+    valid_publish_date = False
+    valid_duration = False
+
+    checkpoint_date = datetime.date(2022, 7, 10)        # 7/10/22
+    minimum_duration = datetime.time(0, 45)                 # 0:45 minutes
 
     # Here, I have just a list of id's; that's it. I've no way to differentiate it.
     # To distinguish podcasts:
     # Greater than 45 minutes long.             # items, contentDetails, duration
-    # Published AFTER kickstart datetime.       # items, snippet, publishedAt
+    # Published AFTER checkpoint datetime.       # items, snippet, publishedAt
     # Other: items, id
     youtube_service = build('youtube', 'v3', developerKey=api_key)
 
     for podcast_id in podcast_urls:
 
         request = youtube_service.videos().list(
-            part="snippet, contentDetails, statistics",
+            part="snippet, contentDetails",
             id=podcast_id
         )
 
         response = request.execute()
 
+        print("Complete video response: ")
+        print()
         pprint.pprint(response)
+        print("\n\n")
 
+        # items, contentDetails, duration
+        print("Duration: ")
+        print(response['items'][0]['contentDetails']['duration'])
+        print("\n\n")
+
+        print("Published At: ")
+        # items, snippet, publishedAt
+        print(response['items'][0]['snippet']['publishedAt'])
+        print("\n\n")
 
 
 
