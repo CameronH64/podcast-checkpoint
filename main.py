@@ -40,7 +40,7 @@ def get_podcast_ids(api_key, podcast_channels):
 
     cumulative = []
     video_ids = []
-    max_returns = 4            # Using a separate variable for video id extraction below.
+    max_returns = 50            # Using a separate variable for video id extraction below.
 
     # Build YouTube service object.
     youtube_service = build('youtube', 'v3', developerKey=api_key)
@@ -96,8 +96,8 @@ def determine_valid_podcasts(api_key, podcast_urls):
     valid_publish_date = False
     valid_duration = False
 
-    checkpoint_date = datetime.date(2022, 7, 10)        # 7/10/22
-    minimum_duration = datetime.time(0, 45)                 # 0:45 minutes
+    checkpoint = datetime.datetime(2022, 7, 14, 8, 0, 0)
+    minimum_duration = datetime.time(0, 30)
 
     # Here, I have just a list of id's; that's it. I've no way to differentiate it.
     # To distinguish podcasts:
@@ -146,11 +146,23 @@ def determine_valid_podcasts(api_key, podcast_urls):
 
         # If publishedAt is after checkpoint, set valid_publish_date to True.
 
-        print(response['items'][0]['snippet']['publishedAt'])
+        video_publishedAt = response['items'][0]['snippet']['publishedAt']
+        video_publishedAt = datetime.datetime.strptime(video_publishedAt, "%Y-%m-%dT%H:%M:%SZ")
+        print(video_publishedAt)
+        print(type(video_publishedAt))
 
         # Code that compares video publish date to checkpoint.
+        checkpoint = datetime.datetime(2022, 7, 14, 8, 0, 0)  # 7/10/22
 
+        print(checkpoint)
+        print(type(checkpoint))
 
+        if video_publishedAt > checkpoint:
+            print("Valid podcast date!")
+            valid_publish_date = True
+        else:
+            print("Not a valid podcast date!")
+            valid_publish_date = False
 
         if valid_duration and valid_publish_date:
             valid_podcasts.append(podcast_id)
@@ -174,9 +186,17 @@ def derive_podcast_urls(podcast_ids):
         podcast_urls.append("www.youtube.com/watch?v=" + video)
 
     # DEBUGGING
-    # pprint.pprint(podcast_urls)
+    pprint.pprint(podcast_urls)
 
     return podcast_urls
+
+
+def create_checkpoint():
+
+    datetime_now = datetime.datetime.now()
+
+    print(datetime_now)
+    print(type(datetime_now))
 
 
 def main():
@@ -191,10 +211,14 @@ def main():
 
     podcast_ids = get_podcast_ids(api_key, podcast_channels)                    # Get all the podcast ids of recent videos.
     valid_podcast_ids = determine_valid_podcasts(api_key, podcast_ids)          # Determine from ids which podcasts are valid. RETURN ONLY VALID IDS.
-    # podcast_urls = derive_podcast_urls(valid_podcast_ids)                     # Append YouTube ids to valid podcast ids.
+    podcast_urls = derive_podcast_urls(valid_podcast_ids)                     # Append YouTube ids to valid podcast ids.
 
     # These YouTube urls can now be downloaded!
     # download_m4a(podcast_urls)
+
+    # Change file title and metadata (use regex)
+
+    # If some sort of error happened, do not update the podcast checkpoint.
 
 
 if __name__ == "__main__":
