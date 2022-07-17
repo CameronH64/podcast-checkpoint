@@ -6,6 +6,7 @@ from yaml.loader import SafeLoader
 from dotenv import load_dotenv
 from googleapiclient.discovery import build
 import datetime
+import isodate
 
 
 def download_m4a(URLS):
@@ -39,7 +40,7 @@ def get_podcast_ids(api_key, podcast_channels):
 
     cumulative = []
     video_ids = []
-    max_returns = 1            # Using a separate variable for video id extraction below.
+    max_returns = 4            # Using a separate variable for video id extraction below.
 
     # Build YouTube service object.
     youtube_service = build('youtube', 'v3', developerKey=api_key)
@@ -114,22 +115,53 @@ def determine_valid_podcasts(api_key, podcast_urls):
 
         response = request.execute()
 
-        print("Complete video response: ")
-        print()
-        pprint.pprint(response)
-        print("\n\n")
+        # print("Complete video response: ")
+        # print()
+        # pprint.pprint(response)
+        # print("\n\n", end="")
 
-        # items, contentDetails, duration
-        print("Duration: ")
-        print(response['items'][0]['contentDetails']['duration'])
-        print("\n\n")
+        # Debugging items, contentDetails, duration
+        # print("Duration: ")
+        # print(response['items'][0]['contentDetails']['duration'])
+        # print("\n")
 
-        print("Published At: ")
-        # items, snippet, publishedAt
+        # If duration is greater than 45 minutes, set valid_duration to True
+
+        duration = isodate.parse_duration(response['items'][0]['contentDetails']['duration'])
+        minimum_duration = datetime.timedelta(days=0, minutes=45, seconds=0)
+
+        if duration >= minimum_duration:
+            print("Greater than 45 minutes!")
+            valid_duration = True
+        else:
+            print("Less than 45 minutes...")
+            valid_duration = False
+
+
+
+        # print("Published At: ")
+        # # items, snippet, publishedAt
+        # print(response['items'][0]['snippet']['publishedAt'])
+        # print("\n")
+
+        # If publishedAt is after checkpoint, set valid_publish_date to True.
+
         print(response['items'][0]['snippet']['publishedAt'])
-        print("\n\n")
+
+        # Code that compares video publish date to checkpoint.
 
 
+
+        if valid_duration and valid_publish_date:
+            valid_podcasts.append(podcast_id)
+
+        # Reset variables for next iteration.
+        valid_publish_date = False
+        valid_duration = False
+
+        print("=========================================")
+
+    pprint.pprint(valid_podcasts)
 
     return valid_podcasts
 
