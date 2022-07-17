@@ -40,7 +40,7 @@ def get_podcast_ids(api_key, podcast_channels):
 
     cumulative = []
     video_ids = []
-    max_returns = 50            # Using a separate variable for video id extraction below.
+    max_returns = 25            # Using a separate variable for video id extraction below.
 
     # Build YouTube service object.
     youtube_service = build('youtube', 'v3', developerKey=api_key)
@@ -75,25 +75,13 @@ def get_podcast_ids(api_key, podcast_channels):
             video_ids.append(cumulative[x]['items'][y]['contentDetails']['videoId'])
 
 
-    # DEBUGGING
-    # print("Cumulative: ")
-    # print()
-    # pprint.pprint(cumulative)
-    # print()
-    #
-    # print()
-    # print("video_ids: ")
-    # print()
-    # pprint.pprint(video_ids)
-    # END DEBUGGING
-
     return video_ids
 
 
 def determine_valid_podcasts(api_key, podcast_urls):
 
     valid_podcasts = []
-    valid_publish_date = False
+    valid_publish_datetime = False
     valid_duration = False
 
     checkpoint = datetime.datetime(2022, 7, 14, 8, 0, 0)
@@ -108,6 +96,7 @@ def determine_valid_podcasts(api_key, podcast_urls):
 
     for podcast_id in podcast_urls:
 
+        # Build YouTube object, and execute it.
         request = youtube_service.videos().list(
             part="snippet, contentDetails",
             id=podcast_id
@@ -115,67 +104,46 @@ def determine_valid_podcasts(api_key, podcast_urls):
 
         response = request.execute()
 
-        # print("Complete video response: ")
-        # print()
-        # pprint.pprint(response)
-        # print("\n\n", end="")
-
-        # Debugging items, contentDetails, duration
-        # print("Duration: ")
-        # print(response['items'][0]['contentDetails']['duration'])
-        # print("\n")
 
         # If duration is greater than 45 minutes, set valid_duration to True
-
         duration = isodate.parse_duration(response['items'][0]['contentDetails']['duration'])
         minimum_duration = datetime.timedelta(days=0, minutes=45, seconds=0)
 
         if duration >= minimum_duration:
-            print("Greater than 45 minutes!")
+            # print("Greater than 45 minutes!")
             valid_duration = True
         else:
-            print("Less than 45 minutes...")
+            # print("Less than 45 minutes...")
             valid_duration = False
 
-
-
-        # print("Published At: ")
-        # # items, snippet, publishedAt
-        # print(response['items'][0]['snippet']['publishedAt'])
-        # print("\n")
-
-        # If publishedAt is after checkpoint, set valid_publish_date to True.
-
+        # Code that compares video publish date to checkpoint.
         video_publishedAt = response['items'][0]['snippet']['publishedAt']
         video_publishedAt = datetime.datetime.strptime(video_publishedAt, "%Y-%m-%dT%H:%M:%SZ")
-        print(video_publishedAt)
-        print(type(video_publishedAt))
 
-        # Code that compares video publish date to checkpoint.
-        checkpoint = datetime.datetime(2022, 7, 14, 8, 0, 0)  # 7/10/22
-
-        print(checkpoint)
-        print(type(checkpoint))
 
         if video_publishedAt > checkpoint:
-            print("Valid podcast date!")
-            valid_publish_date = True
+            # print("Valid podcast date!")
+            valid_publish_datetime = True
         else:
-            print("Not a valid podcast date!")
-            valid_publish_date = False
+            # print("Not a valid podcast date!")
+            valid_publish_datetime = False
 
-        if valid_duration and valid_publish_date:
+
+        # Determine if video is a valid podcast.
+        if valid_duration and valid_publish_datetime:
             valid_podcasts.append(podcast_id)
 
+
         # Reset variables for next iteration.
-        valid_publish_date = False
+        valid_publish_datetime = False
         valid_duration = False
 
-        print("=========================================")
+        # print("=========================================")
 
     pprint.pprint(valid_podcasts)
 
     return valid_podcasts
+
 
 
 def derive_podcast_urls(podcast_ids):
@@ -209,6 +177,7 @@ def main():
     with open("podcasts.yaml") as f:
         podcast_channels = yaml.load(f, Loader=SafeLoader)
 
+    print("Program is running...")
     podcast_ids = get_podcast_ids(api_key, podcast_channels)                    # Get all the podcast ids of recent videos.
     valid_podcast_ids = determine_valid_podcasts(api_key, podcast_ids)          # Determine from ids which podcasts are valid. RETURN ONLY VALID IDS.
     podcast_urls = derive_podcast_urls(valid_podcast_ids)                     # Append YouTube ids to valid podcast ids.
