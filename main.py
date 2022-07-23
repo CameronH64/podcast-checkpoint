@@ -84,8 +84,8 @@ def determine_valid_podcasts(api_key, podcast_urls):
     valid_publish_datetime = False
     valid_duration = False
 
-    checkpoint = datetime.datetime(2022, 7, 14, 8, 0, 0)
-    minimum_duration = datetime.time(0, 30)
+    checkpoint = datetime.datetime(2022, 7, 20, 8, 0, 0)
+    minimum_duration = datetime.timedelta(days=0, minutes=2, seconds=0)
 
     # Here, I have just a list of id's; that's it. I've no way to differentiate it.
     # To distinguish podcasts:
@@ -107,13 +107,10 @@ def determine_valid_podcasts(api_key, podcast_urls):
 
         # If duration is greater than 45 minutes, set valid_duration to True
         duration = isodate.parse_duration(response['items'][0]['contentDetails']['duration'])
-        minimum_duration = datetime.timedelta(days=0, minutes=45, seconds=0)
 
         if duration >= minimum_duration:
-            # print("Greater than 45 minutes!")
             valid_duration = True
         else:
-            # print("Less than 45 minutes...")
             valid_duration = False
 
         # Code that compares video publish date to checkpoint.
@@ -122,10 +119,8 @@ def determine_valid_podcasts(api_key, podcast_urls):
 
 
         if video_publishedAt > checkpoint:
-            # print("Valid podcast date!")
             valid_publish_datetime = True
         else:
-            # print("Not a valid podcast date!")
             valid_publish_datetime = False
 
 
@@ -180,7 +175,7 @@ def main():
     print("Program is running...")
     podcast_ids = get_podcast_ids(api_key, podcast_channels)                    # Get all the podcast ids of recent videos.
     valid_podcast_ids = determine_valid_podcasts(api_key, podcast_ids)          # Determine from ids which podcasts are valid. RETURN ONLY VALID IDS.
-    podcast_urls = derive_podcast_urls(valid_podcast_ids)                     # Append YouTube ids to valid podcast ids.
+    podcast_urls = derive_podcast_urls(valid_podcast_ids)                       # Append YouTube ids to valid podcast ids.
 
     # These YouTube urls can now be downloaded!
     # download_m4a(podcast_urls)
