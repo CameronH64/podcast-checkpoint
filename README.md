@@ -1,10 +1,9 @@
 # Automatic YouTube Podcast Downloading!
-This tool is an automatic YouTube podcast downloader; name is pending. Users can specify a YouTube channel's upload ID in a local .yaml file, start the script, and the latest videos will start downloading. A local file will be created and populated with the ID's of videos already downloaded, so they won't be downloaded again. I also plan on adding an option to change the metadata of the files after they download.
-
+This tool is an automatic YouTube podcast downloader. Once the program is set up, all the user has to do is start the script, and the latest YouTube channel podcasts will start downloading. More features are pending, but this base functionality will remain.
 # How to Use
 Using this program is quite simple.
 - Enter each YouTube channel's upload ID in podcasts.yaml, preceded with a dash and space, i.e., "- ".
-- Make sure the podcasts.yaml file is in same directory as main.py.
+- Ensure that "main.py", "podcasts.yml", and "checkpoint.yml" are all in the same directory.
 - Run the main.py script.
 
 # How to Find A YouTube Channel's Upload ID
