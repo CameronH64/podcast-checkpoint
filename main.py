@@ -1,6 +1,7 @@
 import pprint
 import yt_dlp
 import os
+import pytz
 import yaml
 from yaml.loader import SafeLoader
 from dotenv import load_dotenv
@@ -9,29 +10,18 @@ import datetime
 import isodate
 
 
-def download_m4a(URLS):
+def return_api_key():
 
-    options = {
-        'format': 'm4a/bestaudio/best',
-        # See help(yt_dlp.postprocessor) for a list of available Postprocessors and their arguments
-        'postprocessors': [{  # Extract audio using ffmpeg
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'm4a',
-        }]
-    }
+    load_dotenv()
+    api_key = os.getenv("API_KEY")
+    return api_key
 
-    with yt_dlp.YoutubeDL(options) as ydl:
-        error_code = ydl.download(URLS)
 
-# The reason we have to gather all the video_ids first instead of doing this all in one fell swoop is
-# because the playlistItems() function can't return all the pertinent details needed to specify which podcasts
-# to download. BUT, it CAN and MUST return results for each YouTube channel's upload playlist. Because of the
-# limitations of the youtube.videos() functions. It can only deal with videos, not playlists.
-# The youtube.videos() function can then take the video ids returned by playlistItems() and derive the
-# important details from that. Convoluted? Yes. Works? Also yes. I will look into simplifying this in the future,
-# but as of now, this will have to do.
+def get_podcast_ids(api_key):
 
-def get_podcast_ids(api_key, podcast_channels):
+    # Load the list of podcasts.
+    with open("podcasts.yml") as f:
+        podcast_channels = yaml.load(f, Loader=SafeLoader)
 
     # In case podcast_channels has no upload playlist to download from.
     if not podcast_channels:
@@ -84,15 +74,26 @@ def determine_valid_podcasts(api_key, podcast_urls):
     valid_publish_datetime = False
     valid_duration = False
 
-    checkpoint = datetime.datetime(2022, 7, 24, 8, 0, 0)
+    # Variable for duration checking
     minimum_duration = datetime.timedelta(days=0, minutes=30, seconds=0)
 
-    # Here, I have just a list of id's; that's it. I've no way to differentiate it.
-    # To distinguish podcasts:
-    # Greater than 45 minutes long.             # items, contentDetails, duration
-    # Published AFTER checkpoint datetime.       # items, snippet, publishedAt
-    # Published +- 30 minutes around scheduled upload time.
-    # Other: items, id
+    # Variable for checkpoint checking.
+    with open("checkpoint.yml", "r") as file:
+        checkpoint_file = yaml.load(file, Loader=yaml.SafeLoader)       # type: list
+        checkpoint = checkpoint_file[0]
+
+    checkpoint = checkpoint.strftime("%Y-%m-%dT%H:%M:%SZ")
+    checkpoint = datetime.datetime.strptime(checkpoint, "%Y-%m-%dT%H:%M:%SZ")
+
+    # The checkpoint checking requires some explanation.
+    # The YouTube returns a string, which is parsed to a datetime object. This is datetime object is naive.
+    # However, the checkpoint.yml file needs to be loaded.
+    # Then, the single content is offloaded to a variable.
+    # Then, the variable is converted to a string in the correct format.
+    # This string does the same thing that the YouTube return does (string to datetime).
+    # This resolves the datetime naive vs. aware problem!
+    # (Though it's quite convoluted).
+
     youtube_service = build('youtube', 'v3', developerKey=api_key)
 
     for podcast_id in podcast_urls:
@@ -105,30 +106,20 @@ def determine_valid_podcasts(api_key, podcast_urls):
 
         response = request.execute()
 
-        # TESTING
-
-
-
         ############################################# Podcast Checks #############################################
 
-        # Duration check
+        ##### Duration Check #####
         duration = isodate.parse_duration(response['items'][0]['contentDetails']['duration'])
 
         if duration >= minimum_duration:
             valid_duration = True
 
-
-
-        # Checkpoint check
-        video_publishedAt = response['items'][0]['snippet']['publishedAt']                          # Return published datetime.
+        ##### Checkpoint Check #####
+        video_publishedAt = response['items'][0]['snippet']['publishedAt']                          # Return YouTube published datetime.
         video_publishedAt = datetime.datetime.strptime(video_publishedAt, "%Y-%m-%dT%H:%M:%SZ")     # Convert to string.
 
         if video_publishedAt > checkpoint:
             valid_publish_datetime = True
-
-
-
-
 
         ############################################# Final Checks #############################################
 
@@ -142,11 +133,11 @@ def determine_valid_podcasts(api_key, podcast_urls):
         valid_duration = False
 
         # print("=========================================")
+        # pprint.pprint(response)
 
     pprint.pprint(valid_podcasts)
 
     return valid_podcasts
-
 
 
 def derive_podcast_urls(podcast_ids):
@@ -165,28 +156,53 @@ def derive_podcast_urls(podcast_ids):
 def update_checkpoint():
 
     datetime_now = datetime.datetime.now()
+    datetime_now_string = datetime.datetime.strftime(datetime_now, "%Y-%m-%dT%H:%M:%SZ")
 
-    print(datetime_now)
-    print(type(datetime_now))
+    yaml_date = f"- {datetime_now_string}"
+
+    with open('checkpoint.yml', 'w') as f:
+        f.write(yaml_date)
+
+
+def download_m4a(URLS):
+
+    options = {
+        'format': 'm4a/bestaudio/best',
+        # See help(yt_dlp.postprocessor) for a list of available Postprocessors and their arguments
+        'postprocessors': [{  # Extract audio using ffmpeg
+            'key': 'FFmpegExtractAudio',
+            'preferredcodec': 'm4a',
+        }]
+    }
+
+    with yt_dlp.YoutubeDL(options) as ydl:
+        error_code = ydl.download(URLS)
+
+# The reason we have to gather all the video_ids first instead of doing this all in one fell swoop is
+# because the playlistItems() function can't return all the pertinent details needed to specify which podcasts
+# to download. BUT, it CAN and MUST return results for each YouTube channel's upload playlist. Because of the
+# limitations of the youtube.videos() functions. It can only deal with videos, not playlists.
+# The youtube.videos() function can then take the video ids returned by playlistItems() and derive the
+# important details from that. Convoluted? Yes. Works? Also yes. I will look into simplifying this in the future,
+# but as of now, this will have to do.
+
 
 
 def main():
-    """The main driver function"""
-
-    load_dotenv()
-    api_key = os.getenv("API_KEY")
-
-    # Load the list of podcasts.
-    with open("podcasts.yaml") as f:
-        podcast_channels = yaml.load(f, Loader=SafeLoader)
 
     print("Program is running...")
-    podcast_ids = get_podcast_ids(api_key, podcast_channels)                    # Get all the podcast ids of recent videos.
+
+    api_key = return_api_key()
+
+    podcast_ids = get_podcast_ids(api_key)                    # Get all the podcast ids of recent videos.
+
     valid_podcast_ids = determine_valid_podcasts(api_key, podcast_ids)          # Determine from ids which podcasts are valid. RETURN ONLY VALID IDS.
+
+    update_checkpoint()
+
     podcast_urls = derive_podcast_urls(valid_podcast_ids)                       # Append YouTube ids to valid podcast ids.
 
-    # These YouTube urls can now be downloaded!
-    # download_m4a(podcast_urls)
+    download_m4a(podcast_urls)
 
     # Change file title and metadata (use regex)
 
