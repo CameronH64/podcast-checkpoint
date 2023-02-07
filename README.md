@@ -24,6 +24,16 @@ For the more tech-savvy, this method may be more reliable.
 - It may not come up; if it doesn't, **refresh the page, and try again**. It _should_ show up the second time.
 - Replace the second character, the "C" to a "U". You now have that channel's upload playlist ID!
 
+# API Key Generation
+In order to use this application, you must have a .env file containing an API key in the same directory as that executable. I'm not sharing my API key. However, this guide can show you how to do generate your own.
+
+*Only steps 2 and 3 are necessary*.
+https://developers.google.com/youtube/v3/getting-started
+
+Once you generate it, paste the key and variable declaration in the .env file and save. The program is now completely ready to be used!
+
+    API_KEY=api_key_goes_here
+
 While I plan on coding a native or external way of doing this, this will work for most, if not all channels. And once the upload ID is in the podcasts.yaml file, this is the only setup you need to do to start downloading podcasts.
 
 Happy listening!
