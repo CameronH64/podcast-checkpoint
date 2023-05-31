@@ -72,9 +72,10 @@ def determine_valid_podcasts(api_key, podcast_urls):
     valid_podcasts = []
     valid_publish_datetime = False
     valid_duration = False
+    set_minutes = 10
 
     # Variable for duration checking
-    minimum_duration = datetime.timedelta(days=0, minutes=30, seconds=0)
+    minimum_duration = datetime.timedelta(days=0, minutes=set_minutes, seconds=0)
 
     # Variable for checkpoint checking.
     with open("checkpoint.yml", "r") as file:
@@ -144,7 +145,7 @@ def derive_podcast_urls(podcast_ids):
     podcast_urls = []
 
     for video in podcast_ids:
-        podcast_urls.append("www.youtube.com/watch?v=" + video)
+        podcast_urls.append("https://www.youtube.com/watch?v=" + video)
 
     # DEBUGGING
     pprint.pprint(podcast_urls)
@@ -165,13 +166,16 @@ def update_checkpoint():
 
 def download_m4a(URLS):
 
+    SAVE_PATH = './downloads'
+
     options = {
         'format': 'm4a/bestaudio/best',
         # See help(yt_dlp.postprocessor) for a list of available Postprocessors and their arguments
         'postprocessors': [{  # Extract audio using ffmpeg
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'm4a',
-        }]
+        }],
+        'outtmpl':os.path.join(SAVE_PATH, '%(title)s.%(ext)s')
     }
 
     with yt_dlp.YoutubeDL(options) as ydl:
@@ -197,7 +201,7 @@ def main():
 
     valid_podcast_ids = determine_valid_podcasts(api_key, podcast_ids)          # Determine from ids which podcasts are valid. RETURN ONLY VALID IDS.
 
-    update_checkpoint()
+    # update_checkpoint()
 
     podcast_urls = derive_podcast_urls(valid_podcast_ids)                       # Append YouTube ids to valid podcast ids.
 
