@@ -1,7 +1,6 @@
 import pprint
 import yt_dlp
 import os
-import pytz
 import yaml
 from yaml.loader import SafeLoader
 from dotenv import load_dotenv
