@@ -25,4 +25,4 @@ uritemplate==4.1.1
 urllib3==1.26.9
 websockets==10.3
 youtube-dl==2021.12.17
-yt-dlp==2023.3.4
+yt-dlp==2023.7.6
