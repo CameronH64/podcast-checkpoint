@@ -171,6 +171,7 @@ def download_m4a(URLS):
     options = {
         'format': 'm4a/bestaudio/best',
         # See help(yt_dlp.postprocessor) for a list of available Postprocessors and their arguments
+        'ffmpeg_location': os.path.realpath(os.getenv('FFMPEG_LOCATION')),
         'postprocessors': [{  # Extract audio using ffmpeg
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'm4a',
