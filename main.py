@@ -72,7 +72,7 @@ def determine_valid_podcasts(api_key, podcast_urls):
     valid_podcasts = []
     valid_publish_datetime = False
     valid_duration = False
-    set_minutes = 10
+    set_minutes = 2
 
     # Variable for duration checking
     minimum_duration = datetime.timedelta(days=0, minutes=set_minutes, seconds=0)
@@ -106,22 +106,22 @@ def determine_valid_podcasts(api_key, podcast_urls):
 
         response = request.execute()
 
-        ############################################# Podcast Checks #############################################
+        # ---------------------------------------- Podcast Checks ----------------------------------------
 
-        ##### Duration Check #####
+        # ------- Duration Check -------
         duration = isodate.parse_duration(response['items'][0]['contentDetails']['duration'])
 
         if duration >= minimum_duration:
             valid_duration = True
 
-        ##### Checkpoint Check #####
+        # ------- Checkpoint Check -------
         video_publishedAt = response['items'][0]['snippet']['publishedAt']                          # Return YouTube published datetime.
         video_publishedAt = datetime.datetime.strptime(video_publishedAt, "%Y-%m-%dT%H:%M:%SZ")     # Convert to string.
 
         if video_publishedAt > checkpoint:
             valid_publish_datetime = True
 
-        ############################################# Final Checks #############################################
+        # ---------------------------------------- Final Checks ----------------------------------------
 
         # Determine if video is a valid podcast.
         if valid_duration and valid_publish_datetime:
@@ -132,7 +132,7 @@ def determine_valid_podcasts(api_key, podcast_urls):
         valid_publish_datetime = False
         valid_duration = False
 
-        # print("=========================================")
+        # print("----------------------------------------")
         # pprint.pprint(response)
 
     pprint.pprint(valid_podcasts)
@@ -176,7 +176,7 @@ def download_m4a(URLS):
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'm4a',
         }],
-        'outtmpl':os.path.join(SAVE_PATH, '%(title)s.%(ext)s')
+        'outtmpl': os.path.join(SAVE_PATH, '%(title)s.%(ext)s')
     }
 
     with yt_dlp.YoutubeDL(options) as ydl:
@@ -218,7 +218,7 @@ if __name__ == "__main__":
 
 
 
-################ TESTING
+# ---------------------------------------- TESTING
 
 # # Extract videoId and videoPublishedAt
 # video_urls.append(response['items'][0]['contentDetails']['videoId'])
@@ -245,5 +245,3 @@ if __name__ == "__main__":
 #
 # print()
 
-
-################ TESTING
