@@ -9,6 +9,27 @@ import datetime
 import isodate
 
 
+def main():
+
+    print("Program is running...")
+
+    api_key = return_api_key()
+
+    podcast_ids = get_podcast_ids(api_key)                    # Get all the podcast ids of recent videos.
+
+    valid_podcast_ids = determine_valid_podcasts(api_key, podcast_ids)          # Determine from ids which podcasts are valid. RETURN ONLY VALID IDS.
+
+    # update_checkpoint()
+
+    podcast_urls = derive_podcast_urls(valid_podcast_ids)                       # Append YouTube ids to valid podcast ids.
+
+    download_m4a(podcast_urls)
+
+    # Change file title and metadata (use regex)
+
+    # If some sort of error happened, do not update the podcast checkpoint.
+
+
 def return_api_key():
 
     load_dotenv()
@@ -192,25 +213,6 @@ def download_m4a(URLS):
 
 
 
-def main():
-
-    print("Program is running...")
-
-    api_key = return_api_key()
-
-    podcast_ids = get_podcast_ids(api_key)                    # Get all the podcast ids of recent videos.
-
-    valid_podcast_ids = determine_valid_podcasts(api_key, podcast_ids)          # Determine from ids which podcasts are valid. RETURN ONLY VALID IDS.
-
-    # update_checkpoint()
-
-    podcast_urls = derive_podcast_urls(valid_podcast_ids)                       # Append YouTube ids to valid podcast ids.
-
-    download_m4a(podcast_urls)
-
-    # Change file title and metadata (use regex)
-
-    # If some sort of error happened, do not update the podcast checkpoint.
 
 
 if __name__ == "__main__":
